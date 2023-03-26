@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-core.js"
+    ></script>
+    <script type="text/javascript" src="./script.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+
+    <meta name="theme-color" content="#AA0000" />
+    <title>vector mandalas</title>
+  </head>
+  <body>
+    <canvas id="myCanvas" resize></canvas>
+    <div id="controls">
+      <button
+        class="button is-danger is-large top-right-button"
+        id="file-button"
+      >
+        <span class="icon is-large">
+          <i class="mdi mdi-file mdi-36px"></i>
+        </span>
+      </button>
+      <button
+        class="button is-danger is-large bottom-right-button"
+        id="brush-button"
+      >
+        <span class="icon is-large">
+          <i class="mdi mdi-brush mdi-36px"></i>
+        </span>
+      </button>
+      <button
+        class="button is-danger is-large bottom-left-button"
+        id="undo-button"
+      >
+        <span class="icon is-large">
+          <i class="mdi mdi-undo mdi-36px"></i>
+        </span>
+      </button>
+    </div>
+
+    <div class="modal" id="brush-modal">
+      <div class="modal-background"></div>
+
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Brush settings</p>
+          <button class="delete" aria-label="close"></button>
+        </header>
+        <div class="modal-card-body">
+          <div class="block">
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">Size</label>
+                </div>
+                <div class="column">
+                  <progress
+                    class="progress is-large is-danger"
+                    id="brush-size-bar"
+                    value="80"
+                    max="100"
+                  >
+                    80%
+                  </progress>
+                </div>
+                <div class="column is-3">
+                  <div class="control">
+                    <input
+                      class="input"
+                      type="text"
+                      placeholder="0"
+                      value="80"
+                      id="brush-size-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">Color</label>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <input
+                      class="input"
+                      type="color"
+                      value="#ff0000"
+                      id="brush-color-input"
+                      style="width: 100px"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="field">
+              <div class="columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">Rotations</label>
+                </div>
+                <div class="column">
+                  <progress
+                    class="progress is-large is-danger"
+                    id="rotations-bar"
+                    value="80"
+                    max="100"
+                  >
+                    80%
+                  </progress>
+                </div>
+                <div class="column is-3">
+                  <div class="control">
+                    <input
+                      class="input"
+                      type="text"
+                      placeholder="0"
+                      value="80"
+                      id="rotations-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="buttons">
+                <button class="button is-danger" id="mirror-button">
+                  <span class="icon">
+                    <i class="mdi mdi-mirror"></i>
+                  </span>
+                  <span>Mirror</span>
+                </button>
+
+                <button class="button is-danger" id="simplify-button">
+                  <span class="icon">
+                    <i class="mdi mdi-chart-bell-curve-cumulative"></i>
+                  </span>
+                  <span>Simplify</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
