@@ -24,7 +24,7 @@
 
     <link rel="stylesheet" type="text/css" href="./style.css" />
 
-    <meta name="theme-color" content="#AA0000" />
+    <meta name="theme-color" content="#f14668" />
     <title>vector mandalas</title>
   </head>
   <body>
@@ -38,14 +38,17 @@
           <i class="mdi mdi-file mdi-36px"></i>
         </span>
       </button>
+
       <button
-        class="button is-danger is-large bottom-right-button"
+        class="button is-danger is-large bottom-right-button js-modal-trigger"
         id="brush-button"
+        data-target="brush-modal"
       >
         <span class="icon is-large">
           <i class="mdi mdi-brush mdi-36px"></i>
         </span>
       </button>
+
       <button
         class="button is-danger is-large bottom-left-button"
         id="undo-button"

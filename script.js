@@ -26,47 +26,6 @@ window.onload = function () {
     mandalaDrawer.undo();
   });
 
-  let brushButton = document.getElementById("brush-button");
-  brushButton.addEventListener("click", openBrushModal);
-
-  let brushSizeInput = document.getElementById("brush-size-input");
-  let brushSizeBar = document.getElementById("brush-size-bar");
-
-  brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
-  brushSizeInput.value = mandalaDrawer.brushSize;
-
-  brushSizeBar.addEventListener("click", function (e) {
-    let brushSize = e.offsetX / brushSizeBar.offsetWidth;
-    mandalaDrawer.setPercentageBrushSize(brushSize);
-
-    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
-    brushSizeInput.value = mandalaDrawer.brushSize;
-  });
-
-  let mouseDown = false;
-  brushSizeBar.addEventListener("pointerdown", function (e) {
-    mouseDown = true;
-  });
-  document.addEventListener("pointerup", function (e) {
-    mouseDown = false;
-  });
-  brushSizeBar.addEventListener("pointermove", function (e) {
-    if (mouseDown == false) return;
-    let brushSize = e.offsetX / brushSizeBar.offsetWidth;
-    mandalaDrawer.setPercentageBrushSize(brushSize);
-
-    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
-    brushSizeInput.value = mandalaDrawer.brushSize;
-  });
-
-  brushSizeInput.addEventListener("change", function (e) {
-    let brushSize = brushSizeInput.value;
-    mandalaDrawer.brushSize = brushSize;
-
-    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
-    brushSizeInput.value = mandalaDrawer.brushSize;
-  });
-
   let mirrorButton = document.getElementById("mirror-button");
   if (mandalaDrawer.mirror) {
     mirrorButton.classList.remove("is-light");
@@ -105,7 +64,90 @@ window.onload = function () {
   brushColorInput.addEventListener("change", function (e) {
     mandalaDrawer.brushColor = brushColorInput.value;
   });
+
+  setupBrushSizeSlider(mandalaDrawer);
+  setupRotationsSlider(mandalaDrawer);
 };
+
+function setupBrushSizeSlider(mandalaDrawer) {
+  let brushSizeInput = document.getElementById("brush-size-input");
+  let brushSizeBar = document.getElementById("brush-size-bar");
+
+  brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+  brushSizeInput.value = mandalaDrawer.brushSize;
+
+  brushSizeBar.addEventListener("click", function (e) {
+    let brushSize = e.offsetX / brushSizeBar.offsetWidth;
+    mandalaDrawer.setPercentageBrushSize(brushSize);
+
+    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+    brushSizeInput.value = mandalaDrawer.brushSize;
+  });
+
+  let mouseDown = false;
+  brushSizeBar.addEventListener("pointerdown", function (e) {
+    mouseDown = true;
+  });
+  document.addEventListener("pointerup", function (e) {
+    mouseDown = false;
+  });
+  brushSizeBar.addEventListener("pointermove", function (e) {
+    if (mouseDown == false) return;
+    let brushSize = e.offsetX / brushSizeBar.offsetWidth;
+    mandalaDrawer.setPercentageBrushSize(brushSize);
+
+    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+    brushSizeInput.value = mandalaDrawer.brushSize;
+  });
+
+  brushSizeInput.addEventListener("change", function (e) {
+    let brushSize = brushSizeInput.value;
+    mandalaDrawer.brushSize = brushSize;
+
+    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+    brushSizeInput.value = mandalaDrawer.brushSize;
+  });
+}
+
+function setupRotationsSlider(mandalaDrawer) {
+  let rotationsInput = document.getElementById("rotations-input");
+  let rotationsBar = document.getElementById("rotations-bar");
+
+  rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+  rotationsInput.value = mandalaDrawer.rotations;
+
+  rotationsBar.addEventListener("click", function (e) {
+    let rotations = e.offsetX / rotationsBar.offsetWidth;
+    mandalaDrawer.setPercentageRotations(rotations);
+
+    rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+    rotationsInput.value = mandalaDrawer.rotations;
+  });
+
+  let mouseDown = false;
+  rotationsBar.addEventListener("pointerdown", function (e) {
+    mouseDown = true;
+  });
+  document.addEventListener("pointerup", function (e) {
+    mouseDown = false;
+  });
+  rotationsBar.addEventListener("pointermove", function (e) {
+    if (mouseDown == false) return;
+    let rotations = e.offsetX / rotationsBar.offsetWidth;
+    mandalaDrawer.setPercentageRotations(rotations);
+
+    rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+    rotationsInput.value = mandalaDrawer.rotations;
+  });
+
+  rotationsInput.addEventListener("change", function (e) {
+    let rotations = rotationsInput.value;
+    mandalaDrawer.rotations = rotations;
+
+    rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+    rotationsInput.value = mandalaDrawer.rotations;
+  });
+}
 
 class MandalaDrawer {
   constructor() {
@@ -118,15 +160,17 @@ class MandalaDrawer {
     this.paths = undefined;
 
     this._simplify = settings.simplify ?? true;
-
     this._mirror = settings.mirror ?? true;
-    this._rotations = settings.rotations ?? 8;
+
+    this._brushColor = settings.brushColor ?? "#FF0000";
+
+    this.minRotations = 0;
+    this.maxRotations = 32;
 
     this.maxBrushSize = 15;
     this.minBrushSize = 0.2;
 
-    this._brushColor = settings.brushColor ?? "#FF0000";
-
+    this.rotations = settings.rotations ?? 8;
     this.brushSize = settings.brushSize ?? 1;
 
     this.setupTool();
@@ -140,10 +184,24 @@ class MandalaDrawer {
 
     this.brushSizePercentage = percentage;
 
-    this.brushSize =
+    let brushSize =
       this.minBrushSize + (this.maxBrushSize - this.minBrushSize) * percentage;
 
-    this.brushSize = Math.round(this.brushSize * 10) / 10;
+    this._brushSize = Math.round(brushSize * 10) / 10;
+  }
+
+  setPercentageRotations(percentage) {
+    if (isNaN(percentage)) percentage = 0;
+
+    percentage = Math.max(0, percentage);
+    percentage = Math.min(1, percentage);
+
+    this.rotationsPercentage = percentage;
+
+    let rotations =
+      this.minRotations + (this.maxRotations - this.minRotations) * percentage;
+
+    this.rotations = Math.round(rotations);
   }
 
   set mirror(mirror) {
@@ -155,6 +213,12 @@ class MandalaDrawer {
   }
   set rotations(rotations) {
     this._rotations = rotations;
+    let percentage =
+      (rotations - this.minRotations) / (this.maxRotations - this.minRotations);
+    percentage = Math.max(0, percentage);
+    percentage = Math.min(1, percentage);
+
+    this.rotationsPercentage = percentage;
     this.saveSettings();
   }
   get rotations() {
@@ -174,15 +238,14 @@ class MandalaDrawer {
   get brushColor() {
     return this._brushColor;
   }
-
   set brushSize(size) {
     this._brushSize = size;
-    let percentage = (size - this.minBrushSize) / this.maxBrushSize;
+    let percentage =
+      (size - this.minBrushSize) / (this.maxBrushSize - this.minBrushSize);
     percentage = Math.max(0, percentage);
     percentage = Math.min(1, percentage);
 
     this.brushSizePercentage = percentage;
-
     this.saveSettings();
   }
   get brushSize() {

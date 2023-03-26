@@ -4,7 +4,7 @@ simple browser based vector mandala drawing tool, using [paper.js](http://paperj
 
 ### TODO
 
-- [ ] connect rotations slider to the actual rotation
+- [x] connect rotations slider to the actual rotation
 - [x] save and load settings
 
 - [ ] add zoom and pan on mobile
