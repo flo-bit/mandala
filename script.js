@@ -83,6 +83,14 @@ function setupEventListeners(mandalaDrawer) {
       mandalaDrawer.saveAsPNG();
     }
 
+    if (event.key == "f" && (event.metaKey || event.ctrlKey)) {
+      openFileModal();
+    }
+
+    if (event.key == "b" && (event.metaKey || event.ctrlKey)) {
+      openBrushModal();
+    }
+
     if (event.key == "+" && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       view.zoom *= 1.1;
@@ -118,12 +126,6 @@ function setupEventListeners(mandalaDrawer) {
   });
 
   let mirrorButton = document.getElementById("mirror-button");
-  if (mandalaDrawer.mirror) {
-    mirrorButton.classList.remove("is-light");
-  } else {
-    mirrorButton.classList.add("is-light");
-  }
-
   mirrorButton.addEventListener("click", function (e) {
     mandalaDrawer.mirror = !mandalaDrawer.mirror;
     if (mandalaDrawer.mirror) {
@@ -134,12 +136,6 @@ function setupEventListeners(mandalaDrawer) {
   });
 
   let simplifyButton = document.getElementById("simplify-button");
-  if (mandalaDrawer.simplify) {
-    simplifyButton.classList.remove("is-light");
-  } else {
-    simplifyButton.classList.add("is-light");
-  }
-
   simplifyButton.addEventListener("click", function (e) {
     mandalaDrawer.simplify = !mandalaDrawer.simplify;
     if (mandalaDrawer.simplify) {
@@ -150,8 +146,6 @@ function setupEventListeners(mandalaDrawer) {
   });
 
   let brushColorInput = document.getElementById("brush-color-input");
-  brushColorInput.value = mandalaDrawer.brushColor;
-
   brushColorInput.addEventListener("change", function (e) {
     mandalaDrawer.brushColor = brushColorInput.value;
   });
@@ -197,8 +191,6 @@ function setupEventListeners(mandalaDrawer) {
   //  exportJSONButton.addEventListener("click", mandalaDrawer.saveAsJSON);
 
   let backgroundColorInput = document.getElementById("background-color-input");
-  backgroundColorInput.value = mandalaDrawer.backgroundColor;
-
   backgroundColorInput.addEventListener("change", function (e) {
     mandalaDrawer.backgroundColor = backgroundColorInput.value;
 
@@ -227,26 +219,44 @@ function setupEventListeners(mandalaDrawer) {
   updateFilesList(mandalaDrawer);
 }
 
+function updateUI(mandalaDrawer) {
+  let brushSizeSlider = document.getElementById("brush-size-bar");
+  brushSizeSlider.value = mandalaDrawer.brushSizePercentage * 100;
+
+  let brushSizeLabel = document.getElementById("brush-size-input");
+  brushSizeLabel.value = mandalaDrawer.brushSize;
+
+  let rotationsSlider = document.getElementById("rotations-bar");
+  rotationsSlider.value = mandalaDrawer.rotationsPercentage * 100;
+
+  let rotationsLabel = document.getElementById("rotations-input");
+  rotationsLabel.value = mandalaDrawer.rotations;
+
+  let brushColorInput = document.getElementById("brush-color-input");
+  brushColorInput.value = mandalaDrawer.brushColor;
+
+  let backgroundColorInput = document.getElementById("background-color-input");
+  backgroundColorInput.value = mandalaDrawer.backgroundColor;
+
+  let mirrorButton = document.getElementById("mirror-button");
+  if (mandalaDrawer.mirror) {
+    mirrorButton.classList.remove("is-light");
+  } else {
+    mirrorButton.classList.add("is-light");
+  }
+
+  let simplifyButton = document.getElementById("simplify-button");
+  if (mandalaDrawer.simplify) {
+    simplifyButton.classList.remove("is-light");
+  } else {
+    simplifyButton.classList.add("is-light");
+  }
+}
+
 function updateFilesList(mandalaDrawer) {
   let filesList = document.getElementById("files-list");
   filesList.innerHTML = "";
 
-  /*
-  <div class="control columns is-mobile is-vcentered">
-                <div class="column is-narrow">
-                    label class="label">export</label>
-                </div>
-                <div class="column">
-                  <button class="button is-danger" id="save-button">
-                    <span class="icon">
-                      <i class="mdi mdi-file"></i>
-                    </span>
-
-                    <span>open</span>
-                  </button>
-                </div>
-              </div>
-  */
   for (let file of mandalaDrawer.files) {
     let columns = document.createElement("div");
     columns.classList.add("columns");
@@ -317,9 +327,6 @@ function setupBrushSizeSlider(mandalaDrawer) {
   let brushSizeInput = document.getElementById("brush-size-input");
   let brushSizeBar = document.getElementById("brush-size-bar");
 
-  brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
-  brushSizeInput.value = mandalaDrawer.brushSize;
-
   brushSizeBar.addEventListener("click", function (e) {
     let brushSize = e.offsetX / brushSizeBar.offsetWidth;
     mandalaDrawer.setPercentageBrushSize(brushSize);
@@ -356,9 +363,6 @@ function setupBrushSizeSlider(mandalaDrawer) {
 function setupRotationsSlider(mandalaDrawer) {
   let rotationsInput = document.getElementById("rotations-input");
   let rotationsBar = document.getElementById("rotations-bar");
-
-  rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
-  rotationsInput.value = mandalaDrawer.rotations;
 
   rotationsBar.addEventListener("click", function (e) {
     let rotations = e.offsetX / rotationsBar.offsetWidth;
@@ -407,16 +411,8 @@ class MandalaDrawer {
   constructor() {
     this.tool = new Tool();
 
-    let json = localStorage.getItem("brush-settings");
-    let settings = json === null ? {} : JSON.parse(json);
-
     this.path = undefined;
     this.paths = undefined;
-
-    this._simplify = settings.simplify ?? true;
-    this._mirror = settings.mirror ?? true;
-
-    this._brushColor = settings.brushColor ?? "#FF0000";
 
     this.minRotations = 0;
     this.maxRotations = 32;
@@ -424,14 +420,9 @@ class MandalaDrawer {
     this.maxBrushSize = 15;
     this.minBrushSize = 0.2;
 
-    this.files = settings.files ?? [];
+    this.loadFiles();
+    this.loadFile();
 
-    this.rotations = settings.rotations ?? 8;
-    this.brushSize = settings.brushSize ?? 1;
-
-    this.backgroundColor = settings.backgroundColor ?? "#FFFFFF";
-
-    console.log(this.files);
     this.setupTool();
   }
 
@@ -476,6 +467,16 @@ class MandalaDrawer {
     this._brushSize = Math.round(brushSize * 10) / 10;
   }
 
+  calculateBrushSizePercentage() {
+    let percentage =
+      (this.brushSize - this.minBrushSize) /
+      (this.maxBrushSize - this.minBrushSize);
+    percentage = Math.max(0, percentage);
+    percentage = Math.min(1, percentage);
+
+    this.brushSizePercentage = percentage;
+  }
+
   setPercentageRotations(percentage) {
     if (isNaN(percentage)) percentage = 0;
 
@@ -490,10 +491,20 @@ class MandalaDrawer {
     this.rotations = Math.round(rotations);
   }
 
+  calculateRotationsPercentage() {
+    let percentage =
+      (this.rotations - this.minRotations) /
+      (this.maxRotations - this.minRotations);
+    percentage = Math.max(0, percentage);
+    percentage = Math.min(1, percentage);
+
+    this.rotationsPercentage = percentage;
+  }
+
   set backgroundColor(color) {
     this._backgroundColor = color;
     view.element.style.backgroundColor = color;
-    this.saveSettings();
+    this.saveFile();
   }
   get backgroundColor() {
     return this._backgroundColor;
@@ -501,47 +512,38 @@ class MandalaDrawer {
 
   set mirror(mirror) {
     this._mirror = mirror;
-    this.saveSettings();
+    this.saveFile();
   }
   get mirror() {
     return this._mirror;
   }
+
   set rotations(rotations) {
     this._rotations = rotations;
-    let percentage =
-      (rotations - this.minRotations) / (this.maxRotations - this.minRotations);
-    percentage = Math.max(0, percentage);
-    percentage = Math.min(1, percentage);
-
-    this.rotationsPercentage = percentage;
-    this.saveSettings();
+    this.calculateRotationsPercentage();
+    this.saveFile();
   }
   get rotations() {
     return this._rotations;
   }
   set simplify(simplify) {
     this._simplify = simplify;
-    this.saveSettings();
+    this.saveFile();
   }
   get simplify() {
     return this._simplify;
   }
   set brushColor(color) {
     this._brushColor = color;
-    this.saveSettings();
+    this.saveFile();
   }
   get brushColor() {
     return this._brushColor;
   }
   set brushSize(size) {
     this._brushSize = size;
-    let percentage =
-      (size - this.minBrushSize) / (this.maxBrushSize - this.minBrushSize);
-    percentage = Math.max(0, percentage);
-    percentage = Math.min(1, percentage);
-
-    this.brushSizePercentage = percentage;
-    this.saveSettings();
+    this.calculateBrushSizePercentage();
+    this.saveFile();
   }
   get brushSize() {
     return this._brushSize;
@@ -650,23 +652,37 @@ class MandalaDrawer {
 
   saveFile(name) {
     let json = paper.project.exportJSON();
-    localStorage.setItem(name ?? "current-project", json);
+    let wrapper = {
+      json: json,
+      backgroundColor: this.backgroundColor,
+      brushColor: this.brushColor,
+      brushSize: this.brushSize,
+      mirror: this.mirror,
+      rotations: this.rotations,
+      simplify: this.simplify,
+    };
+
+    localStorage.setItem(name ?? "current-project", JSON.stringify(wrapper));
 
     if (name !== undefined && !this.files.includes(name)) {
       this.files.push(name);
-      this.saveSettings();
+      this.saveFiles();
     }
   }
 
   loadFile(name) {
     let json = localStorage.getItem(name ?? "current-project");
-    paper.project.importJSON(json);
+    let wrapper = JSON.parse(json);
+
+    paper.project.importJSON(wrapper.json);
+
+    this.setSettings(wrapper);
   }
 
   removeFile(name) {
     localStorage.removeItem(name);
     this.files = this.files.filter((f) => f !== name);
-    this.saveSettings();
+    this.saveFiles();
   }
 
   undo() {
@@ -677,17 +693,35 @@ class MandalaDrawer {
     this.saveFile();
   }
 
-  saveSettings() {
+  setSettings(settings) {
+    this._simplify = settings.simplify ?? true;
+    this._mirror = settings.mirror ?? true;
+
+    this._brushColor = settings.brushColor ?? "#FF0000";
+
+    this._rotations = settings.rotations ?? 8;
+    this.calculateRotationsPercentage();
+    this._brushSize = settings.brushSize ?? 1;
+    this.calculateBrushSizePercentage();
+
+    this._backgroundColor = settings.backgroundColor ?? "#FFFFFF";
+    view.element.style.backgroundColor = this.backgroundColor;
+
+    updateUI(this);
+  }
+
+  loadFiles() {
+    let settings = localStorage.getItem("settings");
+    if (settings === null) return;
+
+    settings = JSON.parse(settings);
+    this.files = settings.files;
+  }
+  saveFiles() {
     let settings = {};
-    settings.mirror = this.mirror;
-    settings.simplify = this.simplify;
-    settings.rotations = this.rotations;
-    settings.brushSize = this.brushSize;
-    settings.brushColor = this.brushColor;
-    settings.backgroundColor = this.backgroundColor;
     settings.files = this.files;
 
-    localStorage.setItem("brush-settings", JSON.stringify(settings));
+    localStorage.setItem("settings", JSON.stringify(settings));
   }
 }
 
@@ -705,6 +739,14 @@ function openFileModal() {
 
 function closeFileModal() {
   closeModal(document.getElementById("file-modal"));
+}
+
+function openBrushModal() {
+  openModal(document.getElementById("brush-modal"));
+}
+
+function closeBrushModal() {
+  closeModal(document.getElementById("brush-modal"));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
