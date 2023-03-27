@@ -5,7 +5,10 @@
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"
+    />
 
     <link
       rel="stylesheet"
@@ -20,6 +23,12 @@
       type="text/javascript"
       src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-core.js"
     ></script>
+
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"
+    ></script>
+
     <script type="text/javascript" src="./script.js"></script>
 
     <link rel="stylesheet" type="text/css" href="./style.css" />
@@ -31,8 +40,9 @@
     <canvas id="myCanvas" resize></canvas>
     <div id="controls">
       <button
-        class="button is-danger is-large top-right-button"
+        class="button is-danger is-large top-right-button js-modal-trigger"
         id="file-button"
+        data-target="file-modal"
       >
         <span class="icon is-large">
           <i class="mdi mdi-file mdi-36px"></i>
@@ -64,7 +74,7 @@
 
       <div class="modal-card">
         <header class="modal-card-head">
-          <p class="modal-card-title">Brush settings</p>
+          <p class="modal-card-title">brush</p>
           <button class="delete" aria-label="close"></button>
         </header>
         <div class="modal-card-body">
@@ -72,7 +82,7 @@
             <div class="field">
               <div class="control columns is-mobile is-vcentered">
                 <div class="column is-narrow">
-                  <label class="label">Size</label>
+                  <label class="label">size</label>
                 </div>
                 <div class="column">
                   <progress
@@ -81,7 +91,7 @@
                     value="80"
                     max="100"
                   >
-                    80%
+                    X%
                   </progress>
                 </div>
                 <div class="column is-3">
@@ -101,7 +111,7 @@
             <div class="field">
               <div class="control columns is-mobile is-vcentered">
                 <div class="column is-narrow">
-                  <label class="label">Color</label>
+                  <label class="label">color</label>
                 </div>
                 <div class="column">
                   <div class="control">
@@ -122,7 +132,7 @@
             <div class="field">
               <div class="columns is-mobile is-vcentered">
                 <div class="column is-narrow">
-                  <label class="label">Rotations</label>
+                  <label class="label">rotations</label>
                 </div>
                 <div class="column">
                   <progress
@@ -131,7 +141,7 @@
                     value="80"
                     max="100"
                   >
-                    80%
+                    X%
                   </progress>
                 </div>
                 <div class="column is-3">
@@ -154,17 +164,74 @@
                   <span class="icon">
                     <i class="mdi mdi-mirror"></i>
                   </span>
-                  <span>Mirror</span>
+                  <span>mirror</span>
                 </button>
 
                 <button class="button is-danger" id="simplify-button">
                   <span class="icon">
                     <i class="mdi mdi-chart-bell-curve-cumulative"></i>
                   </span>
-                  <span>Simplify</span>
+                  <span>simplify</span>
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal is-active" id="file-modal">
+      <div class="modal-background"></div>
+
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">settings</p>
+          <button class="delete" aria-label="close"></button>
+        </header>
+        <div class="modal-card-body">
+          <div class="field">
+            <button class="button is-danger" id="clear-button">
+              <span class="icon">
+                <i class="mdi mdi-delete"></i>
+              </span>
+              <span>clear</span>
+            </button>
+          </div>
+
+          <div class="field">
+            <div class="control columns is-mobile is-vcentered">
+              <div class="column is-narrow">
+                <label class="label">export file</label>
+              </div>
+              <div class="column">
+                <button class="button is-danger" id="png-export-button">
+                  <span class="icon">
+                    <i class="mdi mdi-image"></i>
+                  </span>
+
+                  <span>as png</span>
+                </button>
+                <button class="button is-danger" id="svg-export-button">
+                  <span class="icon">
+                    <i class="mdi mdi-vector-circle"></i>
+                  </span>
+
+                  <span>as svg</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="file is-danger">
+            <label class="file-label">
+              <input class="file-input" type="file" name="resume" />
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="mdi mdi-file-upload"></i>
+                </span>
+                <span class="file-label"> import svg </span>
+              </span>
+            </label>
           </div>
         </div>
       </div>

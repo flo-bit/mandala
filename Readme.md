@@ -7,12 +7,12 @@ simple browser based vector mandala drawing tool, using [paper.js](http://paperj
 - [x] connect rotations slider to the actual rotation
 - [x] save and load settings
 
-- [ ] add zoom and pan on mobile
-- [ ] add stuff for pwa
+- [x] add zoom and pan on mobile
+- [x] add stuff for pwa ([ ] check android, check ipad)
 
 - [ ] add icon/favicon
 
-- [ ] create file modal
+- [x] file modal
 - [ ] set background color
 - [ ] clear current drawing
 

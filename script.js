@@ -1,13 +1,66 @@
 paper.install(window);
 
+var isTouchGesture = false;
+
 window.onload = function () {
   paper.setup("myCanvas");
 
   let mandalaDrawer = new MandalaDrawer();
   mandalaDrawer.loadCurrent();
 
+  initPinchZoom(mandalaDrawer);
+
   view.translate(view.center);
 
+  setupEventListeners(mandalaDrawer);
+};
+
+function initPinchZoom(mandalaDrawer) {
+  const canvasElement = paper.view.element;
+  const box = canvasElement.getBoundingClientRect();
+  const offset = new paper.Point(box.left, box.top);
+
+  const hammer = new Hammer(canvasElement, {});
+  hammer.get("pinch").set({ enable: true });
+  hammer.get("tap").set({ enable: true, pointers: 2 });
+
+  let pinching, startMatrix, startMatrixInverted, p0ProjectCoords;
+
+  hammer.on("pinchstart", (e) => {
+    isTouchGesture = true;
+
+    startMatrix = paper.view.matrix.clone();
+    startMatrixInverted = startMatrix.inverted();
+    const p0 = getCenterPoint(e);
+    p0ProjectCoords = paper.view.viewToProject(p0);
+  });
+
+  hammer.on("pinch", (e) => {
+    // Translate and scale view using pinch event's 'center' and 'scale' properties.
+    // Translation computes center's distance from initial center (considering current scale).
+    const p = getCenterPoint(e);
+    const pProject0 = p.transform(startMatrixInverted);
+    const delta = pProject0.subtract(p0ProjectCoords).divide(e.scale);
+    paper.view.matrix = startMatrix
+      .clone()
+      .scale(e.scale, p0ProjectCoords)
+      .translate(delta);
+  });
+
+  hammer.on("pinchend", (e) => {
+    isTouchGesture = false;
+  });
+
+  hammer.on("tap", (e) => {
+    mandalaDrawer.undo();
+  });
+
+  function getCenterPoint(e) {
+    return new paper.Point(e.center.x, e.center.y).subtract(offset);
+  }
+}
+
+function setupEventListeners(mandalaDrawer) {
   document.addEventListener(
     "wheel",
     function (e) {
@@ -21,6 +74,42 @@ window.onload = function () {
     { passive: false }
   );
 
+  document.addEventListener("keydown", function (event) {
+    if (event.key == "s" && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+
+      mandalaDrawer.saveAsPNG();
+    }
+
+    if (event.key == "+" && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      view.zoom *= 1.1;
+    }
+    if (event.key == "-" && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      view.zoom /= 1.1;
+    }
+
+    // move around
+    if (event.key == "ArrowUp") {
+      view.translate(0, 10);
+    }
+    if (event.key == "ArrowDown") {
+      view.translate(0, -10);
+    }
+    if (event.key == "ArrowLeft") {
+      view.translate(10, 0);
+    }
+    if (event.key == "ArrowRight") {
+      view.translate(-10, 0);
+    }
+
+    if (event.key == "z" && (event.metaKey || event.ctrlKey)) {
+      mandalaDrawer.undo();
+    }
+  });
+
+  // brush modal stuff
   let undoButton = document.getElementById("undo-button");
   undoButton.addEventListener("click", function (e) {
     mandalaDrawer.undo();
@@ -67,7 +156,16 @@ window.onload = function () {
 
   setupBrushSizeSlider(mandalaDrawer);
   setupRotationsSlider(mandalaDrawer);
-};
+
+  // file modal stuff
+  let fileInput = document.getElementById("svg-file-input");
+  fileInput.onchange = () => {
+    if (fileInput.files.length > 0) {
+      const fileName = document.querySelector("#file-js-example .file-name");
+      fileName.textContent = fileInput.files[0].name;
+    }
+  };
+}
 
 function setupBrushSizeSlider(mandalaDrawer) {
   let brushSizeInput = document.getElementById("brush-size-input");
@@ -149,6 +247,16 @@ function setupRotationsSlider(mandalaDrawer) {
   });
 }
 
+function downloadURI(uri, name) {
+  var link = document.createElement("a");
+  link.download = name;
+  link.href = uri;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  delete link;
+}
+
 class MandalaDrawer {
   constructor() {
     this.tool = new Tool();
@@ -174,6 +282,13 @@ class MandalaDrawer {
     this.brushSize = settings.brushSize ?? 1;
 
     this.setupTool();
+  }
+
+  saveAsPNG() {
+    view.element.toBlob((blob) => {
+      let dataURL = URL.createObjectURL(blob);
+      downloadURI(dataURL, "mandala.png");
+    });
   }
 
   setPercentageBrushSize(percentage) {
@@ -254,7 +369,7 @@ class MandalaDrawer {
 
   setupTool() {
     this.tool.onMouseDown = (event) => {
-      if (event.modifiers.shift) {
+      if (event.modifiers.shift || isTouchGesture) {
         return;
       }
 
@@ -278,10 +393,12 @@ class MandalaDrawer {
       let group = new Group(this.paths);
 
       this.addPoint(event.point);
+
+      this.lastPathOnePoint = true;
     };
 
     this.tool.onMouseDrag = (event) => {
-      if (event.modifiers.shift) {
+      if (event.modifiers.shift || isTouchGesture) {
         view.translate(event.delta);
         return;
       }
@@ -291,10 +408,12 @@ class MandalaDrawer {
       }
 
       this.addPoint(event.point);
+
+      this.lastPathOnePoint = false;
     };
 
     this.tool.onMouseUp = (event) => {
-      if (event.modifiers.shift || this.paths === undefined) {
+      if (event.modifiers.shift || this.paths === undefined || isTouchGesture) {
         return;
       }
 
@@ -306,39 +425,13 @@ class MandalaDrawer {
 
       this.paths = undefined;
 
+      if (this.lastPathOnePoint) {
+        this.undo();
+        return;
+      }
+
       // save project
       this.saveCurrent();
-    };
-
-    this.tool.onKeyDown = (event) => {
-      if (event.key == "m") {
-        // Create a blob from the canvas...
-        view.element.toBlob((blob) => {
-          // ...and get it as a URL.
-          const url = URL.createObjectURL(blob);
-          // Open it in a new tab.
-          window.open(url, "_blank");
-        });
-      }
-      if (event.key == "+") {
-        view.zoom *= 1.1;
-      }
-      if (event.key == "-") {
-        view.zoom /= 1.1;
-      }
-      // move around
-      if (event.key == "up") {
-        view.translate(0, -10);
-      }
-      if (event.key == "down") {
-        view.translate(0, 10);
-      }
-      if (event.key == "left") {
-        view.translate(-10, 0);
-      }
-      if (event.key == "right") {
-        view.translate(10, 0);
-      }
     };
   }
 
