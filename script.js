@@ -420,6 +420,8 @@ class MandalaDrawer {
     this.maxBrushSize = 15;
     this.minBrushSize = 0.2;
 
+    this.files = [];
+
     this.loadFiles();
     this.loadFile();
 
@@ -672,6 +674,10 @@ class MandalaDrawer {
 
   loadFile(name) {
     let json = localStorage.getItem(name ?? "current-project");
+    if (json === null) {
+      this.setSettings();
+      return;
+    }
     let wrapper = JSON.parse(json);
 
     paper.project.importJSON(wrapper.json);
@@ -694,18 +700,18 @@ class MandalaDrawer {
   }
 
   setSettings(settings) {
-    this._simplify = settings.simplify ?? true;
-    this._mirror = settings.mirror ?? true;
+    this._simplify = settings?.simplify ?? true;
+    this._mirror = settings?.mirror ?? true;
 
-    this._brushColor = settings.brushColor ?? "#FF0000";
+    this._brushColor = settings?.brushColor ?? "#FF0000";
 
-    this._rotations = settings.rotations ?? 8;
+    this._rotations = settings?.rotations ?? 8;
     this.calculateRotationsPercentage();
-    this._brushSize = settings.brushSize ?? 1;
+    this._brushSize = settings?.brushSize ?? 1;
     this.calculateBrushSizePercentage();
 
-    this._backgroundColor = settings.backgroundColor ?? "#FFFFFF";
-    view.element.style.backgroundColor = this.backgroundColor;
+    this._backgroundColor = settings?.backgroundColor ?? "#FFFFFF";
+    view.element.style.backgroundColor = this._backgroundColor;
 
     updateUI(this);
   }
