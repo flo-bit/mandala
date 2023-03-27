@@ -19,6 +19,13 @@ canvas[resize] {
     z-index: 1;
 }
 
+.top-left-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
 .bottom-right-button {
     position: absolute;
     bottom: 0;

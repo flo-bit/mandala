@@ -40,6 +40,16 @@
     <canvas id="myCanvas" resize></canvas>
     <div id="controls">
       <button
+        class="button is-danger is-large top-left-button js-modal-trigger"
+        id="help-button"
+        data-target="help-modal"
+      >
+        <span class="icon is-large">
+          <i class="mdi mdi-help mdi-36px"></i>
+        </span>
+      </button>
+
+      <button
         class="button is-danger is-large top-right-button js-modal-trigger"
         id="file-button"
         data-target="file-modal"
@@ -189,51 +199,140 @@
           <button class="delete" aria-label="close"></button>
         </header>
         <div class="modal-card-body">
-          <div class="field">
-            <button class="button is-danger" id="clear-button">
-              <span class="icon">
-                <i class="mdi mdi-delete"></i>
-              </span>
-              <span>clear</span>
-            </button>
-          </div>
-
-          <div class="field">
-            <div class="control columns is-mobile is-vcentered">
-              <div class="column is-narrow">
-                <label class="label">export file</label>
+          <div class="block">
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">start over</label>
+                </div>
+                <div class="column">
+                  <button class="button is-danger" id="clear-button">
+                    <span class="icon">
+                      <i class="mdi mdi-delete"></i>
+                    </span>
+                    <span>clear</span>
+                  </button>
+                </div>
               </div>
-              <div class="column">
-                <button class="button is-danger" id="png-export-button">
-                  <span class="icon">
-                    <i class="mdi mdi-image"></i>
-                  </span>
-
-                  <span>as png</span>
-                </button>
-                <button class="button is-danger" id="svg-export-button">
-                  <span class="icon">
-                    <i class="mdi mdi-vector-circle"></i>
-                  </span>
-
-                  <span>as svg</span>
-                </button>
+            </div>
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">background color</label>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <input
+                      class="input"
+                      type="color"
+                      value="#ff0000"
+                      id="background-color-input"
+                      style="width: 100px"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="file is-danger">
-            <label class="file-label">
-              <input class="file-input" type="file" name="resume" />
-              <span class="file-cta">
-                <span class="file-icon">
-                  <i class="mdi mdi-file-upload"></i>
-                </span>
-                <span class="file-label"> import svg </span>
-              </span>
-            </label>
+          <div class="block">
+            <div class="columns is-mobile is-vcentered">
+              <div class="column is-narrow">
+                <label class="label">import</label>
+              </div>
+              <div class="column is-narrow">
+                <div class="file is-danger">
+                  <label class="file-label">
+                    <input
+                      id="svg-file-input"
+                      class="file-input"
+                      type="file"
+                      name="resume"
+                    />
+                    <span class="file-cta">
+                      <span class="file-icon">
+                        <i class="mdi mdi-file-upload"></i>
+                      </span>
+                      <span class="file-label">svg</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">export</label>
+                </div>
+                <div class="column">
+                  <button class="button is-danger" id="png-export-button">
+                    <span class="icon">
+                      <i class="mdi mdi-image"></i>
+                    </span>
+
+                    <span>png</span>
+                  </button>
+                  <button class="button is-danger" id="svg-export-button">
+                    <span class="icon">
+                      <i class="mdi mdi-vector-circle"></i>
+                    </span>
+
+                    <span>svg</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="field">
+              <article class="message is-danger">
+                <div class="message-body">
+                  this will save your file to your browser's local storage. if
+                  you clear your browser's local storage, your files will be
+                  lost. if you want to save your files to your computer, use the
+                  export buttons.
+                </div>
+              </article>
+            </div>
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column">
+                  <input
+                    class="input is-danger"
+                    type="text"
+                    placeholder="filename"
+                    id="filename-input"
+                  />
+                </div>
+                <div class="column is-narrow">
+                  <button class="button is-danger" id="save-button">
+                    <span class="icon">
+                      <i class="mdi mdi-file"></i>
+                    </span>
+
+                    <span>save</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field" id="files-list"></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="modal" id="help-modal">
+      <div class="modal-background"></div>
+
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">help</p>
+          <button class="delete" aria-label="close"></button>
+        </header>
+        <div class="modal-card-body">This is the way.</div>
       </div>
     </div>
   </body>
