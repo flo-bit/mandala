@@ -84,7 +84,7 @@ function setupEventListeners(mandalaDrawer) {
     }
 
     if (event.key == "f" && (event.metaKey || event.ctrlKey)) {
-      openFileModal();
+      openSettingsModal();
     }
 
     if (event.key == "b" && (event.metaKey || event.ctrlKey)) {
@@ -194,7 +194,7 @@ function setupEventListeners(mandalaDrawer) {
   backgroundColorInput.addEventListener("change", function (e) {
     mandalaDrawer.backgroundColor = backgroundColorInput.value;
 
-    closeFileModal();
+    closeSettingsModal();
   });
 
   let clearButton = document.getElementById("clear-button");
@@ -202,7 +202,7 @@ function setupEventListeners(mandalaDrawer) {
     project.clear();
     mandalaDrawer.saveFile();
 
-    closeFileModal();
+    closeSettingsModal();
   });
 
   let saveButton = document.getElementById("save-button");
@@ -297,7 +297,7 @@ function updateFilesList(mandalaDrawer) {
       project.clear();
       mandalaDrawer.loadFile(file);
 
-      closeFileModal();
+      closeSettingsModal();
     });
 
     let deleteButtonColumn = document.createElement("div");
@@ -739,12 +739,12 @@ function closeModal($el) {
   $el.classList.remove("is-active");
 }
 
-function openFileModal() {
-  openModal(document.getElementById("file-modal"));
+function openSettingsModal() {
+  openModal(document.getElementById("settings-modal"));
 }
 
-function closeFileModal() {
-  closeModal(document.getElementById("file-modal"));
+function closeSettingsModal() {
+  closeModal(document.getElementById("settings-modal"));
 }
 
 function openBrushModal() {
