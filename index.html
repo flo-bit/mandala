@@ -41,25 +41,14 @@
     <canvas id="myCanvas" resize></canvas>
     <div id="controls">
       <button
-        class="button is-danger is-large top-left-button js-modal-trigger"
-        id="help-button"
-        data-target="help-modal"
-      >
-        <span class="icon is-large">
-          <i class="mdi mdi-help mdi-36px"></i>
-        </span>
-      </button>
-
-      <button
         class="button is-danger is-large top-right-button js-modal-trigger"
         id="file-button"
-        data-target="settings-modal"
+        data-target="file-modal"
       >
         <span class="icon is-large">
-          <i class="mdi mdi-cog mdi-36px"></i>
+          <i class="mdi mdi-file mdi-36px"></i>
         </span>
       </button>
-
       <button
         class="button is-danger is-large bottom-right-button js-modal-trigger"
         id="brush-button"
@@ -71,11 +60,12 @@
       </button>
 
       <button
-        class="button is-danger is-large bottom-left-button"
-        id="undo-button"
+        class="button is-danger is-large bottom-left-button js-modal-trigger"
+        id="help-button"
+        data-target="help-modal"
       >
         <span class="icon is-large">
-          <i class="mdi mdi-undo mdi-36px"></i>
+          <i class="mdi mdi-help mdi-36px"></i>
         </span>
       </button>
     </div>
@@ -85,7 +75,7 @@
 
       <div class="modal-card">
         <header class="modal-card-head">
-          <p class="modal-card-title">brush</p>
+          <p class="modal-card-title">drawing settings</p>
           <button class="delete" aria-label="close"></button>
         </header>
         <div class="modal-card-body">
@@ -93,7 +83,28 @@
             <div class="field">
               <div class="control columns is-mobile is-vcentered">
                 <div class="column is-narrow">
-                  <label class="label">size</label>
+                  <label class="label">background color</label>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <input
+                      class="input"
+                      type="color"
+                      value="#ff0000"
+                      id="background-color-input"
+                      style="width: 100px"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <div class="field">
+              <div class="control columns is-mobile is-vcentered">
+                <div class="column is-narrow">
+                  <label class="label">brush size</label>
                 </div>
                 <div class="column">
                   <progress
@@ -122,7 +133,7 @@
             <div class="field">
               <div class="control columns is-mobile is-vcentered">
                 <div class="column is-narrow">
-                  <label class="label">color</label>
+                  <label class="label">brush color</label>
                 </div>
                 <div class="column">
                   <div class="control">
@@ -143,7 +154,7 @@
             <div class="field">
               <div class="columns is-mobile is-vcentered">
                 <div class="column is-narrow">
-                  <label class="label">rotations</label>
+                  <label class="label">mandala rotations</label>
                 </div>
                 <div class="column">
                   <progress
@@ -191,12 +202,12 @@
       </div>
     </div>
 
-    <div class="modal" id="settings-modal">
+    <div class="modal" id="file-modal">
       <div class="modal-background"></div>
 
       <div class="modal-card">
         <header class="modal-card-head">
-          <p class="modal-card-title">settings</p>
+          <p class="modal-card-title">file</p>
           <button class="delete" aria-label="close"></button>
         </header>
         <div class="modal-card-body">
@@ -216,27 +227,7 @@
                 </div>
               </div>
             </div>
-            <div class="field">
-              <div class="control columns is-mobile is-vcentered">
-                <div class="column is-narrow">
-                  <label class="label">background color</label>
-                </div>
-                <div class="column">
-                  <div class="control">
-                    <input
-                      class="input"
-                      type="color"
-                      value="#ff0000"
-                      id="background-color-input"
-                      style="width: 100px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="block">
             <div class="columns is-mobile is-vcentered">
               <div class="column is-narrow">
                 <label class="label">import</label>
@@ -285,42 +276,6 @@
               </div>
             </div>
           </div>
-
-          <div class="block">
-            <div class="field">
-              <article class="message is-danger">
-                <div class="message-body">
-                  this will save your file to your browser's local storage. if
-                  you clear your browser's local storage, your files will be
-                  lost. if you want to save your files to your computer, use the
-                  export buttons.
-                </div>
-              </article>
-            </div>
-            <div class="field">
-              <div class="control columns is-mobile is-vcentered">
-                <div class="column">
-                  <input
-                    class="input is-danger"
-                    type="text"
-                    placeholder="filename"
-                    id="filename-input"
-                  />
-                </div>
-                <div class="column is-narrow">
-                  <button class="button is-danger" id="save-button">
-                    <span class="icon">
-                      <i class="mdi mdi-file"></i>
-                    </span>
-
-                    <span>save</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="field" id="files-list"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -333,7 +288,37 @@
           <p class="modal-card-title">help</p>
           <button class="delete" aria-label="close"></button>
         </header>
-        <div class="modal-card-body">This is the way.</div>
+        <div class="modal-card-body">
+          <div class="content">
+            Welcome to the Mandala Web Drawing App! This app is designed to help
+            you create beautiful and intricate mandalas with ease. Here's a
+            quick guide to using the app:
+            <ul>
+              <li>
+                Brush settings: To change the brush color and size, tap the
+                brush icon located in the bottom right corner of the screen. You
+                can also change the background color, number of rotations, turn
+                mirroring on/off, and simplify on/off in this menu.
+              </li>
+
+              <li>
+                File settings: To manage your drawings, tap the file icon
+                located in the top right corner of the screen. You can clear
+                your drawing, import previously saved SVGs, and save your
+                drawing as a PNG or SVG. To save your drawing quickly, you can
+                use the keyboard shortcut Control/Command + [S].
+              </li>
+
+              <li>
+                Undo and Navigation: To undo a mistake, use the keyboard
+                shortcut Control/Command + [Z] or a tap with two fingers. You
+                can move the canvas with your arrow keys (or two finger pan on
+                touchscreen/trackpad) and zoom in and out with Control/Command +
+                [+]/[-] (or pinch gesture on touchscreen/trackpad).
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </body>

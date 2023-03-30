@@ -1,66 +1,18 @@
 paper.install(window);
 
 var isTouchGesture = false;
+var mandalaDrawer;
 
 window.onload = function () {
   paper.setup("myCanvas");
 
-  let mandalaDrawer = new MandalaDrawer();
-  mandalaDrawer.loadFile();
+  mandalaDrawer = new MandalaDrawer();
 
-  initPinchZoom(mandalaDrawer);
-
-  view.translate(view.center);
-
-  setupEventListeners(mandalaDrawer);
+  initPinchZoom();
+  setupEventListeners();
 };
 
-function initPinchZoom(mandalaDrawer) {
-  const canvasElement = paper.view.element;
-  const box = canvasElement.getBoundingClientRect();
-  const offset = new paper.Point(box.left, box.top);
-
-  const hammer = new Hammer(canvasElement, {});
-  hammer.get("pinch").set({ enable: true });
-  hammer.get("tap").set({ enable: true, pointers: 2 });
-
-  let pinching, startMatrix, startMatrixInverted, p0ProjectCoords;
-
-  hammer.on("pinchstart", (e) => {
-    isTouchGesture = true;
-
-    startMatrix = paper.view.matrix.clone();
-    startMatrixInverted = startMatrix.inverted();
-    const p0 = getCenterPoint(e);
-    p0ProjectCoords = paper.view.viewToProject(p0);
-  });
-
-  hammer.on("pinch", (e) => {
-    // Translate and scale view using pinch event's 'center' and 'scale' properties.
-    // Translation computes center's distance from initial center (considering current scale).
-    const p = getCenterPoint(e);
-    const pProject0 = p.transform(startMatrixInverted);
-    const delta = pProject0.subtract(p0ProjectCoords).divide(e.scale);
-    paper.view.matrix = startMatrix
-      .clone()
-      .scale(e.scale, p0ProjectCoords)
-      .translate(delta);
-  });
-
-  hammer.on("pinchend", (e) => {
-    isTouchGesture = false;
-  });
-
-  hammer.on("tap", (e) => {
-    mandalaDrawer.undo();
-  });
-
-  function getCenterPoint(e) {
-    return new paper.Point(e.center.x, e.center.y).subtract(offset);
-  }
-}
-
-function setupEventListeners(mandalaDrawer) {
+function setupEventListeners() {
   let canvas = document.getElementById("myCanvas");
 
   canvas.addEventListener(
@@ -80,7 +32,7 @@ function setupEventListeners(mandalaDrawer) {
     if (event.key == "s" && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
 
-      mandalaDrawer.saveAsPNG();
+      mandalaDrawer.saveAsSVG();
     }
 
     if (event.key == "f" && (event.metaKey || event.ctrlKey)) {
@@ -119,12 +71,6 @@ function setupEventListeners(mandalaDrawer) {
     }
   });
 
-  // brush modal stuff
-  let undoButton = document.getElementById("undo-button");
-  undoButton.addEventListener("click", function (e) {
-    mandalaDrawer.undo();
-  });
-
   let mirrorButton = document.getElementById("mirror-button");
   mirrorButton.addEventListener("click", function (e) {
     mandalaDrawer.mirror = !mandalaDrawer.mirror;
@@ -150,8 +96,14 @@ function setupEventListeners(mandalaDrawer) {
     mandalaDrawer.brushColor = brushColorInput.value;
   });
 
-  setupBrushSizeSlider(mandalaDrawer);
-  setupRotationsSlider(mandalaDrawer);
+  setupBrushSizeSlider();
+  setupRotationsSlider();
+
+  let backgroundColorInput = document.getElementById("background-color-input");
+  backgroundColorInput.addEventListener("change", function (e) {
+    mandalaDrawer.backgroundColor = backgroundColorInput.value;
+    closeBrushModal();
+  });
 
   // file modal stuff
   let fileInput = document.getElementById("svg-file-input");
@@ -178,160 +130,85 @@ function setupEventListeners(mandalaDrawer) {
           console.log(error);
         },
       });
+
+      closeFileModal();
     }
   };
 
   let exportPNGButton = document.getElementById("png-export-button");
-  exportPNGButton.addEventListener("click", mandalaDrawer.saveAsPNG);
+  exportPNGButton.addEventListener("click", () => {
+    mandalaDrawer.saveAsPNG();
+    closeFileModal();
+  });
 
   let exportSVGButton = document.getElementById("svg-export-button");
-  exportSVGButton.addEventListener("click", mandalaDrawer.saveAsSVG);
-
-  //  let exportJSONButton = document.getElementById("json-export-button");
-  //  exportJSONButton.addEventListener("click", mandalaDrawer.saveAsJSON);
-
-  let backgroundColorInput = document.getElementById("background-color-input");
-  backgroundColorInput.addEventListener("change", function (e) {
-    mandalaDrawer.backgroundColor = backgroundColorInput.value;
-
-    closeSettingsModal();
+  exportSVGButton.addEventListener("click", () => {
+    mandalaDrawer.saveAsSVG();
+    closeFileModal();
   });
 
   let clearButton = document.getElementById("clear-button");
   clearButton.addEventListener("click", () => {
     project.clear();
-    mandalaDrawer.saveFile();
+    closeFileModal();
+    mandalaDrawer.unsavedChanges = false;
+  });
+}
 
-    closeSettingsModal();
+function initPinchZoom() {
+  const canvasElement = paper.view.element;
+  const box = canvasElement.getBoundingClientRect();
+  const offset = new paper.Point(box.left, box.top);
+
+  const hammer = new Hammer(canvasElement, {});
+  hammer.get("pinch").set({ enable: true });
+  hammer.get("tap").set({ enable: true, pointers: 2 });
+
+  let startMatrix, startMatrixInverted, p0ProjectCoords;
+
+  hammer.on("pinchstart", (e) => {
+    isTouchGesture = true;
+
+    startMatrix = paper.view.matrix.clone();
+    startMatrixInverted = startMatrix.inverted();
+    const p0 = getCenterPoint(e);
+    p0ProjectCoords = paper.view.viewToProject(p0);
   });
 
-  let saveButton = document.getElementById("save-button");
-  let filename = document.getElementById("filename-input");
-
-  saveButton.addEventListener("click", () => {
-    if (filename.value != "") {
-      mandalaDrawer.saveFile(filename.value);
-      updateFilesList(mandalaDrawer);
-      filename.value = "";
-    }
+  hammer.on("pinch", (e) => {
+    // Translate and scale view using pinch event's 'center' and 'scale' properties.
+    // Translation computes center's distance from initial center (considering current scale).
+    const p = getCenterPoint(e);
+    const pProject0 = p.transform(startMatrixInverted);
+    const delta = pProject0.subtract(p0ProjectCoords).divide(e.scale);
+    paper.view.matrix = startMatrix
+      .clone()
+      .scale(e.scale, p0ProjectCoords)
+      .translate(delta);
   });
 
-  updateFilesList(mandalaDrawer);
-}
+  hammer.on("pinchend", (e) => {
+    isTouchGesture = false;
+  });
 
-function updateUI(mandalaDrawer) {
-  let brushSizeSlider = document.getElementById("brush-size-bar");
-  brushSizeSlider.value = mandalaDrawer.brushSizePercentage * 100;
+  hammer.on("tap", (e) => {
+    mandalaDrawer.undo();
+  });
 
-  let brushSizeLabel = document.getElementById("brush-size-input");
-  brushSizeLabel.value = mandalaDrawer.brushSize;
-
-  let rotationsSlider = document.getElementById("rotations-bar");
-  rotationsSlider.value = mandalaDrawer.rotationsPercentage * 100;
-
-  let rotationsLabel = document.getElementById("rotations-input");
-  rotationsLabel.value = mandalaDrawer.rotations;
-
-  let brushColorInput = document.getElementById("brush-color-input");
-  brushColorInput.value = mandalaDrawer.brushColor;
-
-  let backgroundColorInput = document.getElementById("background-color-input");
-  backgroundColorInput.value = mandalaDrawer.backgroundColor;
-
-  let mirrorButton = document.getElementById("mirror-button");
-  if (mandalaDrawer.mirror) {
-    mirrorButton.classList.remove("is-light");
-  } else {
-    mirrorButton.classList.add("is-light");
-  }
-
-  let simplifyButton = document.getElementById("simplify-button");
-  if (mandalaDrawer.simplify) {
-    simplifyButton.classList.remove("is-light");
-  } else {
-    simplifyButton.classList.add("is-light");
+  function getCenterPoint(e) {
+    return new paper.Point(e.center.x, e.center.y).subtract(offset);
   }
 }
 
-function updateFilesList(mandalaDrawer) {
-  let filesList = document.getElementById("files-list");
-  filesList.innerHTML = "";
-
-  for (let file of mandalaDrawer.files) {
-    let columns = document.createElement("div");
-    columns.classList.add("columns");
-    columns.classList.add("is-mobile");
-    columns.classList.add("is-vcentered");
-    columns.classList.add("control");
-    filesList.appendChild(columns);
-
-    let labelColumn = document.createElement("div");
-    labelColumn.classList.add("column");
-    columns.appendChild(labelColumn);
-
-    let label = document.createElement("label");
-    label.classList.add("label");
-    label.innerHTML = file;
-    labelColumn.appendChild(label);
-
-    let openButtonColumn = document.createElement("div");
-    openButtonColumn.classList.add("column");
-    openButtonColumn.classList.add("is-narrow");
-    columns.appendChild(openButtonColumn);
-
-    let openButton = document.createElement("button");
-    openButton.classList.add("button");
-    openButton.classList.add("is-danger");
-    openButtonColumn.appendChild(openButton);
-
-    let openIcon = document.createElement("span");
-    openIcon.classList.add("icon");
-    openIcon.innerHTML = '<i class="mdi mdi-file"></i>';
-    openButton.appendChild(openIcon);
-
-    let openText = document.createElement("span");
-    openText.innerHTML = "open";
-    openButton.appendChild(openText);
-
-    openButton.addEventListener("click", () => {
-      project.clear();
-      mandalaDrawer.loadFile(file);
-
-      closeSettingsModal();
-    });
-
-    let deleteButtonColumn = document.createElement("div");
-    deleteButtonColumn.classList.add("column");
-    deleteButtonColumn.classList.add("is-narrow");
-    columns.appendChild(deleteButtonColumn);
-
-    let deleteButton = document.createElement("button");
-    deleteButton.classList.add("button");
-    deleteButton.classList.add("is-danger");
-    deleteButton.classList.add("is-light");
-    deleteButtonColumn.appendChild(deleteButton);
-
-    let deleteIcon = document.createElement("span");
-    deleteIcon.classList.add("icon");
-    deleteIcon.innerHTML = '<i class="mdi mdi-delete"></i>';
-    deleteButton.appendChild(deleteIcon);
-
-    deleteButton.addEventListener("click", () => {
-      mandalaDrawer.removeFile(file);
-      updateFilesList(mandalaDrawer);
-    });
-  }
-}
-
-function setupBrushSizeSlider(mandalaDrawer) {
+function setupBrushSizeSlider() {
   let brushSizeInput = document.getElementById("brush-size-input");
   let brushSizeBar = document.getElementById("brush-size-bar");
 
   brushSizeBar.addEventListener("click", function (e) {
     let brushSize = e.offsetX / brushSizeBar.offsetWidth;
-    mandalaDrawer.setPercentageBrushSize(brushSize);
+    mandalaDrawer.percentageBrushSize = brushSize;
 
-    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+    brushSizeBar.value = mandalaDrawer.percentageBrushSize * 100;
     brushSizeInput.value = mandalaDrawer.brushSize;
   });
 
@@ -345,9 +222,9 @@ function setupBrushSizeSlider(mandalaDrawer) {
   brushSizeBar.addEventListener("pointermove", function (e) {
     if (mouseDown == false) return;
     let brushSize = e.offsetX / brushSizeBar.offsetWidth;
-    mandalaDrawer.setPercentageBrushSize(brushSize);
+    mandalaDrawer.percentageBrushSize = brushSize;
 
-    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+    brushSizeBar.value = mandalaDrawer.percentageBrushSize * 100;
     brushSizeInput.value = mandalaDrawer.brushSize;
   });
 
@@ -355,20 +232,20 @@ function setupBrushSizeSlider(mandalaDrawer) {
     let brushSize = brushSizeInput.value;
     mandalaDrawer.brushSize = brushSize;
 
-    brushSizeBar.value = mandalaDrawer.brushSizePercentage * 100;
+    brushSizeBar.value = mandalaDrawer.percentageBrushSize * 100;
     brushSizeInput.value = mandalaDrawer.brushSize;
   });
 }
 
-function setupRotationsSlider(mandalaDrawer) {
+function setupRotationsSlider() {
   let rotationsInput = document.getElementById("rotations-input");
   let rotationsBar = document.getElementById("rotations-bar");
 
   rotationsBar.addEventListener("click", function (e) {
     let rotations = e.offsetX / rotationsBar.offsetWidth;
-    mandalaDrawer.setPercentageRotations(rotations);
+    mandalaDrawer.percentageRotations = rotations;
 
-    rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+    rotationsBar.value = mandalaDrawer.percentageRotations * 100;
     rotationsInput.value = mandalaDrawer.rotations;
   });
 
@@ -382,17 +259,16 @@ function setupRotationsSlider(mandalaDrawer) {
   rotationsBar.addEventListener("pointermove", function (e) {
     if (mouseDown == false) return;
     let rotations = e.offsetX / rotationsBar.offsetWidth;
-    mandalaDrawer.setPercentageRotations(rotations);
+    mandalaDrawer.percentageRotations = rotations;
 
-    rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+    rotationsBar.value = mandalaDrawer.percentageRotations * 100;
     rotationsInput.value = mandalaDrawer.rotations;
   });
-
   rotationsInput.addEventListener("change", function (e) {
     let rotations = rotationsInput.value;
     mandalaDrawer.rotations = rotations;
 
-    rotationsBar.value = mandalaDrawer.rotationsPercentage * 100;
+    rotationsBar.value = mandalaDrawer.percentageRotations * 100;
     rotationsInput.value = mandalaDrawer.rotations;
   });
 }
@@ -420,12 +296,78 @@ class MandalaDrawer {
     this.maxBrushSize = 15;
     this.minBrushSize = 0.2;
 
-    this.files = [];
+    this.unsavedChanges = false;
 
-    this.loadFiles();
-    this.loadFile();
-
+    this.loadSettings();
     this.setupTool();
+
+    view.translate(view.center);
+  }
+
+  saveSettings() {
+    let settings = {
+      backgroundColor: this.backgroundColor,
+      brushColor: this.brushColor,
+      brushSize: this.brushSize,
+      mirror: this.mirror,
+      rotations: this.rotations,
+      simplify: this.simplify,
+    };
+
+    localStorage.setItem("settings", JSON.stringify(settings));
+  }
+
+  loadSettings() {
+    let settings = JSON.parse(localStorage.getItem("settings"));
+
+    this._simplify = settings?.simplify ?? false;
+    this._mirror = settings?.mirror ?? true;
+
+    this._brushColor = settings?.brushColor ?? "#000000";
+
+    this._rotations = settings?.rotations ?? 16;
+    this._brushSize = settings?.brushSize ?? 1;
+
+    this._backgroundColor = settings?.backgroundColor ?? "#FFFFFF";
+    view.element.style.backgroundColor = this._backgroundColor;
+
+    this.updateUI();
+  }
+
+  updateUI() {
+    let brushSizeSlider = document.getElementById("brush-size-bar");
+    brushSizeSlider.value = this.percentageBrushSize * 100;
+
+    let brushSizeLabel = document.getElementById("brush-size-input");
+    brushSizeLabel.value = this.brushSize;
+
+    let rotationsSlider = document.getElementById("rotations-bar");
+    rotationsSlider.value = this.percentageRotations * 100;
+
+    let rotationsLabel = document.getElementById("rotations-input");
+    rotationsLabel.value = this.rotations;
+
+    let brushColorInput = document.getElementById("brush-color-input");
+    brushColorInput.value = this.brushColor;
+
+    let backgroundColorInput = document.getElementById(
+      "background-color-input"
+    );
+    backgroundColorInput.value = this.backgroundColor;
+
+    let mirrorButton = document.getElementById("mirror-button");
+    if (this.mirror) {
+      mirrorButton.classList.remove("is-light");
+    } else {
+      mirrorButton.classList.add("is-light");
+    }
+
+    let simplifyButton = document.getElementById("simplify-button");
+    if (this.simplify) {
+      simplifyButton.classList.remove("is-light");
+    } else {
+      simplifyButton.classList.add("is-light");
+    }
   }
 
   saveAsPNG() {
@@ -436,17 +378,18 @@ class MandalaDrawer {
   }
 
   saveAsSVG() {
-    var fileName = "custom.svg";
+    var fileName = "mandala.svg";
     var url =
       "data:image/svg+xml;utf8," +
       encodeURIComponent(
         project.exportSVG({
           asString: true,
           bounds: "content",
-          matrix: paper.view.matrix,
         })
       );
     downloadURI(url, fileName);
+
+    this.unsavedChanges = false;
   }
 
   saveAsJSON() {
@@ -455,7 +398,67 @@ class MandalaDrawer {
     downloadURI(dataURL, "mandala.json");
   }
 
-  setPercentageBrushSize(percentage) {
+  set rotations(rotations) {
+    this._rotations = rotations;
+    this.saveSettings();
+  }
+  get rotations() {
+    return this._rotations;
+  }
+
+  set percentageRotations(percentage) {
+    if (isNaN(percentage)) percentage = 0;
+    percentage = Math.max(0, percentage);
+    percentage = Math.min(1, percentage);
+
+    let rotations =
+      this.minRotations + (this.maxRotations - this.minRotations) * percentage;
+
+    this.rotations = Math.round(rotations);
+  }
+  get percentageRotations() {
+    let percentage =
+      (this.rotations - this.minRotations) /
+      (this.maxRotations - this.minRotations);
+    percentage = Math.max(0, percentage);
+    percentage = Math.min(1, percentage);
+
+    return percentage;
+  }
+
+  set mirror(mirror) {
+    this._mirror = mirror;
+    this.saveSettings();
+  }
+  get mirror() {
+    return this._mirror;
+  }
+
+  set simplify(simplify) {
+    this._simplify = simplify;
+    this.saveSettings();
+  }
+  get simplify() {
+    return this._simplify;
+  }
+
+  set brushColor(color) {
+    this._brushColor = color;
+    this.saveSettings();
+  }
+  get brushColor() {
+    return this._brushColor;
+  }
+
+  set brushSize(size) {
+    this._brushSize = size;
+    this.saveSettings();
+  }
+  get brushSize() {
+    return this._brushSize;
+  }
+
+  set percentageBrushSize(percentage) {
     if (isNaN(percentage)) percentage = 0;
 
     percentage = Math.max(0, percentage);
@@ -466,89 +469,25 @@ class MandalaDrawer {
     let brushSize =
       this.minBrushSize + (this.maxBrushSize - this.minBrushSize) * percentage;
 
-    this._brushSize = Math.round(brushSize * 10) / 10;
+    this.brushSize = Math.round(brushSize * 10) / 10;
   }
-
-  calculateBrushSizePercentage() {
+  get percentageBrushSize() {
     let percentage =
       (this.brushSize - this.minBrushSize) /
       (this.maxBrushSize - this.minBrushSize);
     percentage = Math.max(0, percentage);
     percentage = Math.min(1, percentage);
 
-    this.brushSizePercentage = percentage;
-  }
-
-  setPercentageRotations(percentage) {
-    if (isNaN(percentage)) percentage = 0;
-
-    percentage = Math.max(0, percentage);
-    percentage = Math.min(1, percentage);
-
-    this.rotationsPercentage = percentage;
-
-    let rotations =
-      this.minRotations + (this.maxRotations - this.minRotations) * percentage;
-
-    this.rotations = Math.round(rotations);
-  }
-
-  calculateRotationsPercentage() {
-    let percentage =
-      (this.rotations - this.minRotations) /
-      (this.maxRotations - this.minRotations);
-    percentage = Math.max(0, percentage);
-    percentage = Math.min(1, percentage);
-
-    this.rotationsPercentage = percentage;
+    return percentage;
   }
 
   set backgroundColor(color) {
     this._backgroundColor = color;
     view.element.style.backgroundColor = color;
-    this.saveFile();
+    this.saveSettings();
   }
   get backgroundColor() {
     return this._backgroundColor;
-  }
-
-  set mirror(mirror) {
-    this._mirror = mirror;
-    this.saveFile();
-  }
-  get mirror() {
-    return this._mirror;
-  }
-
-  set rotations(rotations) {
-    this._rotations = rotations;
-    this.calculateRotationsPercentage();
-    this.saveFile();
-  }
-  get rotations() {
-    return this._rotations;
-  }
-  set simplify(simplify) {
-    this._simplify = simplify;
-    this.saveFile();
-  }
-  get simplify() {
-    return this._simplify;
-  }
-  set brushColor(color) {
-    this._brushColor = color;
-    this.saveFile();
-  }
-  get brushColor() {
-    return this._brushColor;
-  }
-  set brushSize(size) {
-    this._brushSize = size;
-    this.calculateBrushSizePercentage();
-    this.saveFile();
-  }
-  get brushSize() {
-    return this._brushSize;
   }
 
   setupTool() {
@@ -609,13 +548,13 @@ class MandalaDrawer {
 
       this.paths = undefined;
 
+      // remove path if it only has one point
       if (this.lastPathOnePoint) {
         this.undo();
         return;
       }
 
-      // save project
-      this.saveFile();
+      this.unsavedChanges = true;
     };
   }
 
@@ -652,84 +591,26 @@ class MandalaDrawer {
     }
   }
 
-  saveFile(name) {
-    let json = paper.project.exportJSON();
-    let wrapper = {
-      json: json,
-      backgroundColor: this.backgroundColor,
-      brushColor: this.brushColor,
-      brushSize: this.brushSize,
-      mirror: this.mirror,
-      rotations: this.rotations,
-      simplify: this.simplify,
-    };
-
-    localStorage.setItem(name ?? "current-project", JSON.stringify(wrapper));
-
-    if (name !== undefined && !this.files.includes(name)) {
-      this.files.push(name);
-      this.saveFiles();
-    }
-  }
-
-  loadFile(name) {
-    let json = localStorage.getItem(name ?? "current-project");
-    if (json === null) {
-      this.setSettings();
-      return;
-    }
-    let wrapper = JSON.parse(json);
-
-    paper.project.importJSON(wrapper.json);
-
-    this.setSettings(wrapper);
-  }
-
-  removeFile(name) {
-    localStorage.removeItem(name);
-    this.files = this.files.filter((f) => f !== name);
-    this.saveFiles();
-  }
-
   undo() {
     let last = paper.project.activeLayer.lastChild;
     if (last == undefined) return;
     last.remove();
-
-    this.saveFile();
-  }
-
-  setSettings(settings) {
-    this._simplify = settings?.simplify ?? true;
-    this._mirror = settings?.mirror ?? true;
-
-    this._brushColor = settings?.brushColor ?? "#FF0000";
-
-    this._rotations = settings?.rotations ?? 8;
-    this.calculateRotationsPercentage();
-    this._brushSize = settings?.brushSize ?? 1;
-    this.calculateBrushSizePercentage();
-
-    this._backgroundColor = settings?.backgroundColor ?? "#FFFFFF";
-    view.element.style.backgroundColor = this._backgroundColor;
-
-    updateUI(this);
-  }
-
-  loadFiles() {
-    let settings = localStorage.getItem("settings");
-    if (settings === null) return;
-
-    settings = JSON.parse(settings);
-    this.files = settings.files;
-  }
-  saveFiles() {
-    let settings = {};
-    settings.files = this.files;
-
-    localStorage.setItem("settings", JSON.stringify(settings));
   }
 }
+
+window.onbeforeunload = function (e) {
+  e = e || window.event;
+
+  if (!mandalaDrawer.unsavedChanges) return;
+
+  // For IE and Firefox prior to version 4
+  if (e) {
+    e.returnValue = "Sure?";
+  }
+
+  // For Safari
+  return "Sure?";
+};
 
 function openModal($el) {
   $el.classList.add("is-active");
@@ -739,20 +620,20 @@ function closeModal($el) {
   $el.classList.remove("is-active");
 }
 
-function openSettingsModal() {
-  openModal(document.getElementById("settings-modal"));
-}
-
-function closeSettingsModal() {
-  closeModal(document.getElementById("settings-modal"));
-}
-
 function openBrushModal() {
   openModal(document.getElementById("brush-modal"));
 }
 
 function closeBrushModal() {
   closeModal(document.getElementById("brush-modal"));
+}
+
+function closeFileModal() {
+  closeModal(document.getElementById("file-modal"));
+}
+
+function openFileModal() {
+  openModal(document.getElementById("file-modal"));
 }
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -29,5 +29,6 @@ simple browser based vector mandala drawing tool, using [paper.js](http://paperj
 
 - [ ] refactor/cleanup
 - [ ] add icons as svg instead of webfont
-- [ ] add noscript tag
-- [ ] show error/success message on file save
+
+- [ ] remove file storage on localstorage
+- [ ] setup help modal
