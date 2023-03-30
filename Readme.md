@@ -12,3 +12,4 @@ Also works as a web app on android (not tested) and ios. Simply add it to your h
 - [ ] add icon/favicon
 
 - [ ] add images to readme
+- [ ] fix SVG saving on ios
