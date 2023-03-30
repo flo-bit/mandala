@@ -10,3 +10,5 @@ Also works as a web app on android (not tested) and ios. Simply add it to your h
 
 - [x] add stuff for pwa ([ ] check android, check ipad)
 - [ ] add icon/favicon
+
+- [ ] add images to readme
